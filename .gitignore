@@ -1,0 +1,30 @@
+# OSX
+.DS_Store
+Icon
+
+## Thumbnails
+._*
+
+## Files that might appear on external disk
+.Spotlight-V100
+
+# SublimeText project files
+/*.sublime-project
+*.sublime-workspace
+
+#Node
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+logs
+results
+node_modules
+
+npm-debug.log

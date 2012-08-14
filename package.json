@@ -1,0 +1,17 @@
+{
+  "name": "modulejs",
+  "version": "0.0.1",
+  "description": "A light weight implementation of AMD with no dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": "",
+  "author": {
+    "name": "Aaron Spaulding"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "node-static": "~0.6.0"
+  }
+}

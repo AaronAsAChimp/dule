@@ -88,21 +88,20 @@ function define(id, dependencies, factory) {
 				} else {
 					throw 'E:2';
 				}
-			} else {
-
-				if (!(depend_id in local_define._modules)) {
-					// if there are no circular dependencies create the module for this dependency
-					//   its dependencies will be added when its module load.s
-					local_define._modules[depend_id] = new local_define.Module(depend_id);
-
-					// include it
-					resolve.load(depend_id);
-				}
-
-				// then let it know what depends on it
-				local_define._modules[depend_id].dependency_of(local_define._modules[id]);
-
 			}
+
+			if (!(depend_id in local_define._modules)) {
+				// if there are no circular dependencies create the module for this dependency
+				//   its dependencies will be added when its module load.s
+				local_define._modules[depend_id] = new local_define.Module(depend_id);
+
+				// include it
+				resolve.load(depend_id);
+			}
+
+			// then let it know what depends on it
+			local_define._modules[depend_id].dependency_of(local_define._modules[id]);
+
 		}
 	}
 }

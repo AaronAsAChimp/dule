@@ -14,6 +14,8 @@ define('loader/path', function () {
 
 	};
 
+	var path_proto = define.loaders.path;
+
 	/**
 	 * Load a module for the given id. This is done by creating a script tag and
 	 * inserting it into the DOM. Implement this method to override how modules
@@ -21,7 +23,7 @@ define('loader/path', function () {
 	 *
 	 * @param  {String} id A module id that has been resolved to its absolute path.
 	 */
-	define.loaders.path.prototype.load = function (id) {
+	path_proto.prototype.load = function (id) {
 		var element = document.createElement('script'),
 			body = document.body;
 
@@ -45,7 +47,7 @@ define('loader/path', function () {
 	 * @param  {String} relative The relative id that should be resolved.
 	 * @return {String}
 	 */
-	define.loaders.path.prototype.resolve = function (root, relative) {
+	path_proto.prototype.resolve = function (root, relative) {
 		switch (relative.charAt(0)) {
 
 		// handles ../ and ./

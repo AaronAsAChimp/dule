@@ -7,103 +7,87 @@
  *
  * To keep this file small the errors have also been minified. Here's a cheat sheet:
  *
- *   - E:1 - Invalid arguments
+ *   - E:1 - Id is required when calling define
  *   - E:2 - Circular dependency found
  */
 function define(id, dependencies, factory) {
 	'use strict';
 
-	var local_define = define, // a reference to the global define for minification
-		resolve = local_define.loader,
-		id_parts, depend, depend_id;
+	// id is required
+	if (typeof id !== 'string') {
+		if (typeof NON_ESSENTIAL === 'undefined') {
+			throw define._util.error('Id is required.');
+		} else {
+			throw 'E:1';
+		}
+	}
 
 	if (typeof factory === 'undefined') {
-		if (typeof dependencies === 'undefined') {
-			// define(function () {}) or define({})
-			factory = id;
-			id = null;
-			dependencies = [];
-		} else if (typeof id === 'string') {
-			// define('/modules/coolModule', function () {})
-			//   or define('/modules/coolModule', {})
-			factory = dependencies;
-			dependencies = [];
-		} else if (local_define._util.isArray(id)) {
-			// define(['/modules/coolModule', '/modules/coolerModule'], function () {})
-			//   or define(['/modules/coolModule', '/modules/coolerModule'], {})
-			factory = dependencies;
-			dependencies = id;
-			id = null;
-		} else {
-			// there are two parameters, but the first is of an unexpected type
+		factory = dependencies;
+		dependencies = [];
+	}
+
+	var local_define = define, // a reference to the global define for minification
+		resolve = local_define.loader,
+		id_parts = id.split('!'),
+		depend, depend_id;
+
+	if (id_parts[0].length === 0) {
+		resolve = id_parts[0];
+
+		if (id_parts.length !== 1) {
+			id = id_parts[1];
+		}
+	}
+
+	// redefine resolve to be the instance of the loader
+	resolve = new local_define.loaders[resolve]();
+	
+	// make the id absolute
+	id = resolve.resolve(local_define.module_path, id);
+
+	if (!(id in local_define._modules)) {
+		// this is a source module-- it was included directly
+		//   and not through the module resolution process.
+
+		local_define._modules[id] = new local_define.Module(id);
+	}
+
+	// quick loop to resolve depencency names
+	for (depend in dependencies) {
+		dependencies[depend] = resolve.resolve(local_define.module_path, dependencies[depend]);
+	}
+
+	local_define._modules[id].factory(factory);
+	local_define._modules[id].depends_on(dependencies);
+
+	// look for circular dependencies.
+	for (depend in dependencies) {
+		depend_id = dependencies[depend];
+
+		// if we've seen it and its not fully loaded, then its a circular dependency
+		if (depend_id in local_define._modules && !local_define._modules[depend_id].is_loaded()) {
 			if (typeof NON_ESSENTIAL === 'undefined') {
-				throw local_define._util.error('Improper arguments provided to define');
+				throw local_define._util.error('Circular dependency found when defining module: ' + id);
 			} else {
-				throw 'E:1';
+				throw 'E:2';
 			}
 		}
+
+		if (!(depend_id in local_define._modules)) {
+			// if there are no circular dependencies create the module for this dependency
+			//   its dependencies will be added when its module load.s
+			local_define._modules[depend_id] = new local_define.Module(depend_id);
+
+			// include it
+			resolve.load(depend_id);
+		}
+
+		// then let it know what depends on it
+		local_define._modules[depend_id].dependency_of(local_define._modules[id]);
+
 	}
 
-	if (id !== null) {
-
-		id_parts = id.split('!');
-
-		if (id_parts[0].length === 0) {
-			resolve = id_parts[0];
-
-			if (id_parts.length !== 1) {
-				id = id_parts[1];
-			}
-		}
-
-		// redefine resolve to be the instance of the loader
-		resolve = new local_define.loaders[resolve]();
-		
-		// make the id absolute
-		id = resolve.resolve(local_define.module_path, id);
-
-		if (!(id in local_define._modules)) {
-			// this is a source module-- it was included directly
-			//   and not through the module resolution process.
-
-			local_define._modules[id] = new local_define.Module(id);
-		}
-
-		// quick loop to resolve depencency names
-		for (depend in dependencies) {
-			dependencies[depend] = resolve.resolve(local_define.module_path, dependencies[depend]);
-		}
-
-		local_define._modules[id].factory(factory);
-		local_define._modules[id].depends_on(dependencies);
-
-		// look for circular dependencies.
-		for (depend in dependencies) {
-			depend_id = dependencies[depend];
-
-			// if we've seen it and its not fully loaded, then its a circular dependency
-			if (depend_id in local_define._modules && !local_define._modules[depend_id].is_loaded()) {
-				if (typeof NON_ESSENTIAL === 'undefined') {
-					throw local_define._util.error('Circular dependency found when defining module: ' + id);
-				} else {
-					throw 'E:2';
-				}
-			}
-
-			if (!(depend_id in local_define._modules)) {
-				// if there are no circular dependencies create the module for this dependency
-				//   its dependencies will be added when its module load.s
-				local_define._modules[depend_id] = new local_define.Module(depend_id);
-
-				// include it
-				resolve.load(depend_id);
-			}
-
-			// then let it know what depends on it
-			local_define._modules[depend_id].dependency_of(local_define._modules[id]);
-
-		}
-	}
 }
 
 // Extend define with the necessary goodies

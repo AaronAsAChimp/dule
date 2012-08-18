@@ -26,16 +26,20 @@
 		define('module', {});
 	});
 
-	QUnit.test('define([], {}) can be called without error.', function (is) {
-		QUnit.expect(0);
+	QUnit.test('define([], {}) can\'t be called without error.', function (assert) {
+		QUnit.expect(1);
 
-		define([], {});
+		assert.throws(function () {
+			define([], {});
+		}, /\bid\b/i, 'are ids required?');
 	});
 
-	QUnit.test('define({}) can be called without error.', function (is) {
-		QUnit.expect(0);
+	QUnit.test('define({}) can\'t be called without error.', function (assert) {
+		QUnit.expect(1);
 
-		define({});
+		assert.throws(function () {
+			define({});
+		}, /\bid\b/i, 'are ids required?');
 	});
 
 	QUnit.test('define() can detect circular references.', function (is) {

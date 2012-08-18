@@ -14,7 +14,8 @@ function define(id, dependencies, factory) {
 	'use strict';
 
 	var local_define = define, // a reference to the global define for minification
-		depend, depend_id;
+		resolve = local_define.loader,
+		id_parts, depend, depend_id;
 
 	if (typeof factory === 'undefined') {
 		if (typeof dependencies === 'undefined') {
@@ -45,8 +46,21 @@ function define(id, dependencies, factory) {
 
 	if (id !== null) {
 
+		id_parts = id.split('!');
+
+		if (id_parts[0].length === 0) {
+			resolve = id_parts[0];
+
+			if (id_parts.length !== 1) {
+				id = id_parts[1];
+			}
+		}
+
+		// redefine resolve to be the instance of the loader
+		resolve = new local_define.loaders[resolve]();
+		
 		// make the id absolute
-		id = local_define._util.path_resolve(local_define.module_path, id);
+		id = resolve.resolve(local_define.module_path, id);
 
 		if (!(id in local_define._modules)) {
 			// this is a source module-- it was included directly
@@ -57,7 +71,7 @@ function define(id, dependencies, factory) {
 
 		// quick loop to resolve depencency names
 		for (depend in dependencies) {
-			dependencies[depend] = local_define._util.path_resolve(local_define.module_path, dependencies[depend]);
+			dependencies[depend] = resolve.resolve(local_define.module_path, dependencies[depend]);
 		}
 
 		local_define._modules[id].factory(factory);
@@ -75,22 +89,26 @@ function define(id, dependencies, factory) {
 					throw 'E:2';
 				}
 			} else {
-				// if there are no circular dependencies create the module for this dependency
-				//   its dependencies will be added when its module load.s
-				local_define._modules[depend_id] = new local_define.Module(depend_id);
+
+				if (!(depend_id in local_define._modules)) {
+					// if there are no circular dependencies create the module for this dependency
+					//   its dependencies will be added when its module load.s
+					local_define._modules[depend_id] = new local_define.Module(depend_id);
+
+					// include it
+					resolve.load(depend_id);
+				}
 
 				// then let it know what depends on it
 				local_define._modules[depend_id].dependency_of(local_define._modules[id]);
 
-				// include it
-				local_define._util.require(depend_id);
 			}
 		}
 	}
 }
 
 // Extend define with the necessary goodies
-(function (define, document) {
+(function (define) {
 	'use strict';
 
 	define.Module = function (id) {
@@ -101,7 +119,7 @@ function define(id, dependencies, factory) {
 
 		// this stuff can't be determined until the dependencies are set
 		this._depends = null;
-		this._left = 1 / 0; // Infinity, seems like this should be in uglify
+		this._left = 1 / 0; // Infinity, seems like this optimization should be in uglify. It is! https://github.com/mishoo/UglifyJS/pull/340
 
 		// this can't be determined until the factory is set
 		this._factory = null;
@@ -126,6 +144,12 @@ function define(id, dependencies, factory) {
 
 	module_prototype.dependency_of = function (module) {
 		this._dependency_of.push(module);
+
+		// if the dependency is preloaded tell the new module so.
+		// at this point backtrack should've already ran.
+		if (this.is_loaded()) {
+			module.dependency_loaded(this._id, this._factory);
+		}
 	};
 
 	module_prototype.is_loaded = function () {
@@ -134,6 +158,9 @@ function define(id, dependencies, factory) {
 
 	module_prototype.backtrack = function () {
 
+		// the module factory should be prepared regardless of it being a
+		// dependency of another module. Define may be simply be used as a
+		// function closure.
 		this.prepare_factory();
 
 		// tell the modules that depend on it that its loaded
@@ -166,6 +193,8 @@ function define(id, dependencies, factory) {
 		}
 	};
 
+	define.loaders = {};
+
 	define._modules = {};
 
 	/**
@@ -174,57 +203,11 @@ function define(id, dependencies, factory) {
 	 * @private
 	 */
 	define._util = {
-		isArray: Array.isArray || function (test_array) {
+		isArray: function (test_array) {
 			// this is not a 100% test.
 			//   It will not handle arrays created in separate windows.
 			//   It will not handle Array.prototype which is technically an array, although no one cares.
 			return test_array instanceof Array;
-		},
-		path_resolve: function (root, relative) {
-			switch (relative.charAt(0)) {
-
-			// handles ../ and ./
-			case '.':
-				var rel_parts = relative.split('/'),
-					root_parts = root.split('/'),
-					part;
-
-				// get rid of the empty element created by the '/'
-				root_parts.pop();
-
-				for (part in rel_parts) {
-					if (rel_parts[0] === '..') {
-						root_parts.pop();
-					}
-
-					rel_parts.shift();
-				}
-
-				return root_parts.join('/') + '/' + rel_parts.join('/');
-
-			case '/':
-				return relative;
-
-			case 'h':
-				if (/https?:.*/.test(relative)) {
-					return relative;
-				}
-
-				return root + relative;
-
-			default:
-				return root + relative;
-			}
-		},
-		require: function (id) {
-			var element = document.createElement('script'),
-				// i suppose the head is as good a place as any
-				header = document.getElementsByTagName('head')[0];
-
-			element.id = 'module-' + id;
-			element.src = id + '.js';
-
-			header.appendChild(element);
 		}
 	};
 
@@ -238,21 +221,38 @@ function define(id, dependencies, factory) {
 			return 'ModuleJS: ERROR: ' + message;
 		};
 
+		// not necessary if minified
+		define._util.warn = function (message) {
+			return 'ModuleJS: WARNING: ' + message;
+		};
+
 		define._util.save = function () {
 			return {
-				_util: {
-					require: define._util.require
+				_util: {},
+				_modules: {
+					'loader/path': define._modules['loader/path']
 				},
-				module_path: define.module_path
+				module_path: define.module_path,
+				loader: define.loader
 			};
 		};
 
 		// this function is useful only for running tests and is not helpful,
 		// and potentially damaging, in production code.
 		define._util.reset = function (state) {
-			define._modules = {};
-			define._util.require = state._util.require;
+			var module_tags = document.getElementsByName('modulejs-module'),
+				tag;
+
+			define._modules = {
+				'loader/path': define._modules['loader/path']
+			};
+
 			define.module_path = state.module_path;
+			define.loader = state.loader;
+
+			for (tag = module_tags.length - 1; tag >= 0; tag--) {
+				module_tags[tag].parentNode.removeChild(module_tags[tag]);
+			}
 		};
 	}
 
@@ -264,10 +264,40 @@ function define(id, dependencies, factory) {
 	define.module_path = '/modules/';
 
 	/**
+	 * This is the default loader, set it to your preferred loader
+	 *
+	 * @public
+	 */
+	define.loader = 'nop';
+
+	/**
 	 * This define function abides by the Asynchronous Module Definition specification.
 	 *
 	 * @public
 	 */
 	define.amd = {};
 
-}(define, document));
+	/**
+	 * @class A Loader that doesn't do any thing. Set this as your default
+	 * loader if you wish to load modules through an external source. Such as
+	 * HTML script tags.
+	 */
+	define.loaders.nop = function () {};
+
+	define.loaders.nop.prototype.load = function (id) {
+		if (typeof NON_ESSENTIAL === 'undefined') {
+			console.warn(define._util.warn(
+				'A module (' + id + ') has been asked to load with the NOP' +
+				' loader.\n\nThe NOP loader assumes that module has been loaded' +
+				' through some other mechanism. To remove this warning, double' +
+				' check that you have included all your dependencies and then' +
+				' reorder them so that a dependencies are not required before' +
+				' they are loaded.'));
+		}
+	};
+
+	define.loaders.nop.prototype.resolve = function (root, id) {
+		return id;
+	};
+
+}(define));

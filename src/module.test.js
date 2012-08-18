@@ -7,7 +7,7 @@
 		setup: function () {
 			// mocks
 			this.define_state = define._util.save();
-			define._util.require = function () {};
+			define.loader = 'nop';
 		},
 		teardown: function () {
 			define._util.reset(this.define_state);
@@ -39,7 +39,14 @@
 	});
 
 	QUnit.test('define() can detect circular references.', function (is) {
-		QUnit.expect(1);
+		QUnit.expect(3);
+
+		// mock console.warn to get spy on whats happening
+		var native_warn = console.warn;
+
+		console.warn = function () {
+			is.ok(true, 'was a warning given?');
+		};
 
 		is.throws(function () {
 			define('module-a', ['module-b'], function (b) {
@@ -54,16 +61,32 @@
 
 			});
 		}, /circular/i, 'has an exception been thrown?');
+
+		console.warn = native_warn;
 	});
+
+	/**
+	 * Graph:
+	 *
+	 * C
+	 * |
+	 * |
+	 * B
+	 * |
+	 * |
+	 * A
+	 *
+	 * Load Order:
+	 *
+	 * C, B, A
+	 */
 
 	QUnit.test('define() doesn\'t detect circular references when are none.', function (is) {
 		QUnit.expect(2);
 
-		define('module-a', ['module-b'], function (b) {
-			is.equal(b.module, 'b', 'was the correct module returned?');
-
-			return {
-				module: 'a'
+		define('module-c', [], function () {
+			return function () {
+				is.ok(false, 'this function should never be called');
 			};
 		});
 
@@ -75,11 +98,74 @@
 			};
 		});
 
-		define('module-c', [], function () {
+		define('module-a', ['module-b'], function (b) {
+			is.equal(b.module, 'b', 'was the correct module returned?');
+
+			return {
+				module: 'a'
+			};
+		});
+
+	});
+
+	/**
+	 * Graph:
+	 *
+	 *    D
+	 *   / \
+	 *  /   \
+	 * B     C
+	 *  \   /
+	 *   \ /
+	 *    A
+	 *
+	 * Load Order:
+	 *
+	 * D, B, A, C
+	 */
+	
+	QUnit.test('define() can load modules after the initial setup.', function (is) {
+		QUnit.expect(4);
+
+		// mock console.warn to get spy on whats happening
+		var native_warn = console.warn;
+
+		console.warn = function () {
+			is.ok(true, 'was a warning given?');
+		};
+
+		define('module-d', [], function () {
 			return function () {
 				is.ok(false, 'this function should never be called');
 			};
 		});
+
+		define('module-b', ['module-d'], function (d) {
+			is.equal(typeof d, 'function', 'was the proper value returned?');
+
+			return {
+				module: 'b'
+			};
+		});
+
+		define('module-a', ['module-b', 'module-c'], function (b) {
+			is.equal(b.module, 'b', 'was the correct module returned?');
+
+			return {
+				module: 'a'
+			};
+		});
+
+		define('module-c', ['module-d'], function (d) {
+			is.equal(typeof d, 'function', 'was the proper value returned?');
+
+			return {
+				module: 'b'
+			};
+		});
+
+		console.warn = native_warn;
+
 	});
 
 	QUnit.module('ModuleJS define._util', {
@@ -112,91 +198,6 @@
 
 	});
 
-	QUnit.test('define._util.path_resolve can resolve relative paths.', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', 'cool_stuff.js');
-
-		is.equal(path, '/base/stuff/modules/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.path_resolve can resolve relative paths with folders.', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', 'hasenpfeffer/cool_stuff.js');
-
-		is.equal(path, '/base/stuff/modules/hasenpfeffer/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-
-	QUnit.test('define._util.path_resolve can resolve relative paths with "../" .', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', '../../cool_stuff.js');
-
-		is.equal(path, '/base/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.path_resolve can resolve relative paths with "./" .', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', '././cool_stuff.js');
-
-		is.equal(path, '/base/stuff/modules/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.path_resolve can resolve relative paths with a mixture of parts.', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', './../scrabble/cool_stuff.js');
-
-		is.equal(path, '/base/stuff/scrabble/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-
-	QUnit.test('define._util.path_resolve can resolve semi-relative paths that start with "//".', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', '//cdn.example.com/scrabble/cool_stuff.js');
-
-		is.equal(path, '//cdn.example.com/scrabble/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.path_resolve can resolve semi-relative paths that start with "/".', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', '/scrabble/cool_stuff.js');
-
-		is.equal(path, '/scrabble/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.path_resolve can resolve absolute paths that start with "http://".', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', 'http://cdn.example.com/scrabble/cool_stuff.js');
-
-		is.equal(path, 'http://cdn.example.com/scrabble/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-
-	QUnit.test('define._util.path_resolve can resolve absolute paths that start with "https://".', function (is) {
-
-		var path = define._util.path_resolve('/base/stuff/modules/', 'https://cdn.example.com/scrabble/cool_stuff.js');
-
-		is.equal(path, 'https://cdn.example.com/scrabble/cool_stuff.js', 'was the path resolved correctly?');
-
-	});
-
-	QUnit.test('define._util.require can include scripts relative to the module path.', function (is) {
-
-		define._util.require('null');
-
-		var script = document.getElementById('module-null');
-
-		is.equal(script.tagName, 'SCRIPT', 'was the correct tag created?');
-		is.ok(/.*\/null\.js/.test(script.src), 'was the path resolved correctly?');
-	});
-
 	QUnit.module('ModuleJS define.Module');
 
 	QUnit.test('Module can track when its dependencies are completely loaded.', function (is) {
@@ -219,6 +220,19 @@
 		is.ok(module.is_loaded(), 'the module\'s dependencies should be completely loaded.');
 	});
 
+	/**
+	 * Graph:
+	 *
+	 * Ic   Co
+	 *  \   /
+	 *   \ /
+	 *   Icc
+	 *
+	 * Load Order:
+	 *
+	 * Ic, Co, Icc
+	 */
+
 	QUnit.test('Module can track when its dependencies are completely loaded when it has leaf dependencies.', function (is) {
 		var ice_cream = new define.Module('ice-cream', {}),
 			cone = new define.Module('cone', {}),
@@ -234,6 +248,24 @@
 		is.ok(ice_cream_cone.is_loaded(), 'the module\'s dependencies should be completely loaded.');
 
 	});
+
+
+	/**
+	 * Graph:
+	 *
+	 *    Mo   Fa  Ft
+	 * Cl  \   |   /  Sl
+	 *  \   \  |  /   /
+	 *   \   \ | /   /
+	 *   Li   DrF---Pe
+	 *     \   |   /
+	 *      \  |  /
+	 *        FrM
+	 *
+	 * Load Order:
+	 *
+	 * Cl, Li, Sl, Mo, Fa, Ft, DrF, Pe, FrM
+	 */
 
 	QUnit.test('Module can let the modules that depend on it know that its completely loaded.', function (is) {
 		var lightening = new define.Module('lightening', {}),
@@ -277,30 +309,6 @@
 		dr_frankenstein.dependency_loaded();
 
 		is.ok(fraken_module.is_loaded(), 'the module\'s dependencies should be completely loaded.');
-	});
-
-	QUnit.module('ModuleJS integration tests', {
-		setup: function () {
-			this.define_state = define._util.save();
-
-			define.module_path = './test/modules/';
-		},
-		teardown: function () {
-			define._util.reset(this.define_state);
-		}
-	});
-
-	QUnit.test('ModuleJS can load and execute modules over a network connection (or from a file-system).', function (is) {
-		QUnit.stop(1);
-
-		define('test-module', ['dependent-module-a'], function (dependent_module) {
-			QUnit.start();
-
-			dependent_module.verify_property_string(is);
-			dependent_module.verify_property_number(is);
-			dependent_module.verify_method(is);
-			dependent_module.verify_subobject(is);
-		});
 	});
 
 }());

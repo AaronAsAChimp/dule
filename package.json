@@ -1,5 +1,5 @@
 {
-  "name": "modulejs",
+  "name": "dule",
   "version": "0.0.1",
   "description": "A light weight implementation of AMD with no dependencies",
   "main": "index.js",

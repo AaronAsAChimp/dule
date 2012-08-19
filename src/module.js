@@ -201,12 +201,12 @@ function define(id, dependencies, factory) {
 
 		// not necessary if minified
 		define._util.error = function (message) {
-			return 'ModuleJS: ERROR: ' + message;
+			return 'Dule: ERROR: ' + message;
 		};
 
 		// not necessary if minified
 		define._util.warn = function (message) {
-			return 'ModuleJS: WARNING: ' + message;
+			return 'Dule: WARNING: ' + message;
 		};
 
 		define._util.save = function () {

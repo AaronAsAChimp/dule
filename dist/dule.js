@@ -1,4 +1,4 @@
-/*! modulejs - v0.0.1 - 2012-08-19
+/*! dule - v0.0.1 - 2012-08-19
 * Copyright (c) 2012 Aaron Spaulding; Licensed MIT */
 
 /**
@@ -202,12 +202,12 @@ function define(id, dependencies, factory) {
 
 		// not necessary if minified
 		define._util.error = function (message) {
-			return 'ModuleJS: ERROR: ' + message;
+			return 'Dule: ERROR: ' + message;
 		};
 
 		// not necessary if minified
 		define._util.warn = function (message) {
-			return 'ModuleJS: WARNING: ' + message;
+			return 'Dule: WARNING: ' + message;
 		};
 
 		define._util.save = function () {
@@ -320,7 +320,7 @@ define('loader/path', function () {
 
 		if (typeof NON_ESSENTIAL === 'undefined') {
 			element.id = 'module-' + id;
-			element.name = 'modulejs-module';
+			element.name = 'dule-module';
 		}
 
 		body.appendChild(element);
@@ -339,7 +339,7 @@ define('loader/path', function () {
 
 				if (typeof NON_ESSENTIAL === 'undefined') {
 					script.id = 'module-' + id;
-					script.name = 'modulejs-module';
+					script.name = 'dule-module';
 				}
 
 				body.appendChild(script);

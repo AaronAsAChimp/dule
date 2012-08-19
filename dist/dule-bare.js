@@ -1,4 +1,4 @@
-/*! modulejs - v0.0.1 - 2012-08-19
+/*! dule - v0.0.1 - 2012-08-19
 * Copyright (c) 2012 Aaron Spaulding; Licensed MIT */
 
 /**
@@ -202,12 +202,12 @@ function define(id, dependencies, factory) {
 
 		// not necessary if minified
 		define._util.error = function (message) {
-			return 'ModuleJS: ERROR: ' + message;
+			return 'Dule: ERROR: ' + message;
 		};
 
 		// not necessary if minified
 		define._util.warn = function (message) {
-			return 'ModuleJS: WARNING: ' + message;
+			return 'Dule: WARNING: ' + message;
 		};
 
 		define._util.save = function () {

@@ -32,7 +32,7 @@ define('loader/path', function () {
 
 		if (typeof NON_ESSENTIAL === 'undefined') {
 			element.id = 'module-' + id;
-			element.name = 'modulejs-module';
+			element.name = 'dule-module';
 		}
 
 		body.appendChild(element);
@@ -51,7 +51,7 @@ define('loader/path', function () {
 
 				if (typeof NON_ESSENTIAL === 'undefined') {
 					script.id = 'module-' + id;
-					script.name = 'modulejs-module';
+					script.name = 'dule-module';
 				}
 
 				body.appendChild(script);

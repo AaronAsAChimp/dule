@@ -3,7 +3,7 @@
 (function () {
 	'use strict';
 
-	QUnit.module('ModuleJS define()', {
+	QUnit.module('Dule define()', {
 		setup: function () {
 			// mocks
 			this.define_state = define._util.save();
@@ -172,7 +172,7 @@
 
 	});
 
-	QUnit.module('ModuleJS define._util', {
+	QUnit.module('Dule define._util', {
 		setup: function () {
 			this.define_state = define._util.save();
 
@@ -202,7 +202,7 @@
 
 	});
 
-	QUnit.module('ModuleJS define.Module');
+	QUnit.module('Dule define.Module');
 
 	QUnit.test('Module can track when its dependencies are completely loaded.', function (is) {
 		var module = new define.Module('franken-module', {});

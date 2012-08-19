@@ -157,7 +157,7 @@
 		});
 	});*/
 
-	QUnit.module('ModuleJS Path loader integration tests', {
+	QUnit.module('Dule Path loader integration tests', {
 		setup: function () {
 			this.define_state = define._util.save();
 
@@ -168,7 +168,7 @@
 		}
 	});
 
-	QUnit.test('ModuleJS can load and execute modules over a network connection (or from a file-system).', function (is) {
+	QUnit.test('Dule can load and execute modules over a network connection (or from a file-system).', function (is) {
 		QUnit.stop(1);
 
 		define('test-module', ['dependent-module-a'], function (dependent_module) {

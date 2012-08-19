@@ -1,4 +1,4 @@
-ModuleJS
+DuleJS
 ========
 
 A light weight implementation of AMD with no dependencies.

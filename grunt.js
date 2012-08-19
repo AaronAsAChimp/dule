@@ -19,14 +19,22 @@ module.exports = function (grunt) {
 			files: ['index.html']
 		},
 		concat: {
-			dist: {
+			bare: {
+				src: ['<banner:meta.banner>', '<file_strip_banner:src/module.js>'],
+				dest: 'dist/<%= pkg.name %>-bare.js'
+			},
+			full: {
 				src: ['<banner:meta.banner>', '<file_strip_banner:src/module.js>', 'src/loader/path.js'],
 				dest: 'dist/<%= pkg.name %>.js'
 			}
 		},
 		min: {
-			dist: {
-				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+			bare: {
+				src: ['<banner:meta.banner>', '<config:concat.bare.dest>'],
+				dest: 'dist/<%= pkg.name %>-bare.min.js'
+			},
+			full: {
+				src: ['<banner:meta.banner>', '<config:concat.full.dest>'],
 				dest: 'dist/<%= pkg.name %>.min.js'
 			}
 		},

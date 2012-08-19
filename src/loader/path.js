@@ -14,7 +14,7 @@ define('loader/path', function () {
 
 	};
 
-	var path_proto = define.loaders.path;
+	var path_proto = define.loaders.path.prototype;
 
 	/**
 	 * Load a module for the given id. This is done by creating a script tag and
@@ -23,7 +23,7 @@ define('loader/path', function () {
 	 *
 	 * @param  {String} id A module id that has been resolved to its absolute path.
 	 */
-	path_proto.prototype.load = function (id) {
+	path_proto.load = function (id) {
 		var element = document.createElement('script'),
 			body = document.body;
 
@@ -36,6 +36,31 @@ define('loader/path', function () {
 		}
 
 		body.appendChild(element);
+
+		/*var element = document.createElement('object'),
+			body = document.body;
+
+		element.data = id + '.js';
+		element.style.visibility = 'hidden';
+
+		element.onload = element.onreadystatechange = function () {
+			if (('readyState' in element && element.readyState === 4) || !('readyState' in element)) {
+				var script = document.createElement('script');
+
+				script.src = element.data;
+
+				if (typeof NON_ESSENTIAL === 'undefined') {
+					script.id = 'module-' + id;
+					script.name = 'modulejs-module';
+				}
+
+				body.appendChild(script);
+				body.removeChild(element);
+			}
+		};
+
+		body.appendChild(element);*/
+
 	};
 
 	/**
@@ -47,7 +72,7 @@ define('loader/path', function () {
 	 * @param  {String} relative The relative id that should be resolved.
 	 * @return {String}
 	 */
-	path_proto.prototype.resolve = function (root, relative) {
+	path_proto.resolve = function (root, relative) {
 		switch (relative.charAt(0)) {
 
 		// handles ../ and ./

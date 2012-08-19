@@ -139,7 +139,7 @@
 
 	});
 
-	QUnit.test('define._util.require can include scripts relative to the module path.', function (is) {
+	/*QUnit.test('define._util.require can include scripts relative to the module path.', function (is) {
 
 		QUnit.stop(1);
 		define('test', ['loader/path'], function () {
@@ -155,7 +155,7 @@
 			is.equal(script.tagName, 'SCRIPT', 'was the correct tag created?');
 			is.ok(/.*\/null\.js/.test(script.src), 'was the path resolved correctly?');
 		});
-	});
+	});*/
 
 	QUnit.module('ModuleJS Path loader integration tests', {
 		setup: function () {

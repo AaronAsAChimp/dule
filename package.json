@@ -4,7 +4,7 @@
   "description": "A light weight implementation of AMD with no dependencies",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "grunt"
   },
   "repository": "",
   "author": {

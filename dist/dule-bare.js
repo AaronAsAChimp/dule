@@ -1,4 +1,4 @@
-/*! dule - v0.0.1 - 2012-08-19
+/*! dule - v0.1.0 - 2012-08-21
 * Copyright (c) 2012 Aaron Spaulding; Licensed MIT */
 
 /**

@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "node-static": "~0.6.0"
+    "node-static": "~0.6.0",
+    "grunt": "~0.3.12"
   }
 }
